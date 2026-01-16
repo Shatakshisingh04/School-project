@@ -2,6 +2,12 @@
 
 A comprehensive attendance management system designed for rural schools with multilingual support (English/Hindi).
 
+## 👥 Project Type - **Group Project**
+## 👤 Team Members
+- Yashvi lakhiwal
+- Palak kaushik
+- Shatakshi singh
+- Ravleen kaur
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed on your system:
