@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Attendance System - Rural Schools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            min-width: 400px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #4CAF50, #2196F3, #FF9800);
+        }
+        
+        .header {
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .language-btn, .login-type-btn, .btn {
+            width: 100%;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            background: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .language-btn:hover, .login-type-btn:hover, .btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .language-btn.selected, .login-type-btn.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .form-group {
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .login-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        
+        .login-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            margin-top: 10px;
+        }
+        
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        
+        .icon {
+            font-size: 24px;
+        }
+        
+        .role-icons {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .student-icon { color: #4CAF50; }
+        .teacher-icon { color: #2196F3; }
+        .admin-icon { color: #FF9800; }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            text-align: left;
+            display: none;
+        }
+        
+        .alert.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Dashboard Styles */
+        .dashboard {
+            max-width: 800px;
+            padding: 20px;
+        }
+        
+        .user-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Selection Screen -->
+        <div id="languageScreen" class="screen active">
+            <div class="header">
+                <h1 id="mainTitle">Automated Attendance System</h1>
+                <p id="subtitle">For Rural Schools</p>
+            </div>
+            
+            <h2 id="langPrompt">Choose Your Language / अपनी भाषा चुनें</h2>
+            
+            <button class="language-btn" onclick="selectLanguage('english')">
+                <span class="icon">🇬🇧</span>
+                <span>English</span>
+            </button>
+            
+            <button class="language-btn" onclick="selectLanguage('hindi')">
+                <span class="icon">🇮🇳</span>
+                <span>हिंदी</span>
+            </button>
+            
+            <div class="footer">
+                <p>Designed for Rural Education</p>
+            </div>
+        </div>
+
+        <!-- Login Type Selection Screen -->
+        <div id="loginTypeScreen" class="screen">
+            <div class="header">
+                <h1 id="systemTitle">Automated Attendance System</h1>
+                <p id="schoolSubtitle">For Rural Schools</p>
+            </div>
+            
+            <h2 id="loginTypePrompt">Select Login Type</h2>
+            
+            <button class="login-type-btn" onclick="showLoginForm('student')">
+                <span class="icon student-icon">👨‍🎓</span>
+                <span id="studentText">Student</span>
+            </button>
+            
+            <button class="login-type-btn" onclick="showLoginForm('teacher')">
+                <span class="icon teacher-icon">👩‍🏫</span>
+                <span id="teacherText">Teacher</span>
+            </button>
+            
+            <button class="login-type-btn" onclick="showLoginForm('admin')">
+                <span class="icon admin-icon">👨‍💼</span>
+                <span id="adminText">Admin</span>
+            </button>
+            
+            <button class="btn back-btn" onclick="goBack('languageScreen')">
+                <span id="backText">← Back</span>
+            </button>
+        </div>
+
+        <!-- Student Login Screen -->
+        <div id="studentLoginScreen" class="screen">
+            <div class="header">
+                <h1 id="studentLoginTitle">Student Login</h1>
+                <div class="role-icons">
+                    <span class="icon student-icon">👨‍🎓</span>
+                </div>
+            </div>
+            
+            <div class="alert" id="studentAlert"></div>
+            
+            <form id="studentLoginForm">
+                <div class="form-group">
+                    <label for="studentId" id="studentIdLabel">Student ID:</label>
+                    <input type="text" id="studentId" name="studentId" required placeholder="Enter your student ID">
+                </div>
+                
+                <div class="form-group">
+                    <label for="studentPassword" id="studentPasswordLabel">Password:</label>
+                    <input type="password" id="studentPassword" name="studentPassword" required placeholder="Enter your password">
+                </div>
+                
+                <button type="submit" class="btn login-btn" id="studentLoginBtn">
+                    <span class="btn-text">Login</span>
+                    <span class="loading" style="display: none;"></span>
+                </button>
+                <button type="button" class="btn back-btn" onclick="goBack('loginTypeScreen')" id="studentBackBtn">← Back</button>
+            </form>
+        </div>
+
+        <!-- Teacher Login Screen -->
+        <div id="teacherLoginScreen" class="screen">
+            <div class="header">
+                <h1 id="teacherLoginTitle">Teacher Login</h1>
+                <div class="role-icons">
+                    <span class="icon teacher-icon">👩‍🏫</span>
+                </div>
+            </div>
+            
+            <div class="alert" id="teacherAlert"></div>
+            
+            <form id="teacherLoginForm">
+                <div class="form-group">
+                    <label for="teacherId" id="teacherIdLabel">Teacher ID:</label>
+                    <input type="text" id="teacherId" name="teacherId" required placeholder="Enter your teacher ID">
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacherPassword" id="teacherPasswordLabel">Password:</label>
+                    <input type="password" id="teacherPassword" name="teacherPassword" required placeholder="Enter your password">
+                </div>
+                
+                <button type="submit" class="btn login-btn" id="teacherLoginBtn">
+                    <span class="btn-text">Login</span>
+                    <span class="loading" style="display: none;"></span>
+                </button>
+                <button type="button" class="btn back-btn" onclick="goBack('loginTypeScreen')" id="teacherBackBtn">← Back</button>
+            </form>
+        </div>
+
+        <!-- Admin Login Screen -->
+        <div id="adminLoginScreen" class="screen">
+            <div class="header">
+                <h1 id="adminLoginTitle">Admin Login</h1>
+                <div class="role-icons">
+                    <span class="icon admin-icon">👨‍💼</span>
+                </div>
+            </div>
+            
+            <div class="alert" id="adminAlert"></div>
+            
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminId" id="adminIdLabel">Admin ID:</label>
+                    <input type="text" id="adminId" name="adminId" required placeholder="Enter your admin ID">
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminPassword" id="adminPasswordLabel">Password:</label>
+                    <input type="password" id="adminPassword" name="adminPassword" required placeholder="Enter your password">
+                </div>
+                
+                <button type="submit" class="btn login-btn" id="adminLoginBtn">
+                    <span class="btn-text">Login</span>
+                    <span class="loading" style="display: none;"></span>
+                </button>
+                <button type="button" class="btn back-btn" onclick="goBack('loginTypeScreen')" id="adminBackBtn">← Back</button>
+            </form>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div id="dashboardScreen" class="screen dashboard">
+            <div class="user-info">
+                <h2>Welcome, <span id="userName"></span>!</h2>
+                <p>Role: <span id="userRole"></span></p>
+                <p>User ID: <span id="userIdDisplay"></span></p>
+            </div>
+            
+            <div id="dashboardContent">
+                <!-- Dynamic content based on user role -->
+            </div>
+            
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        let currentLanguage = 'english';
+        let currentUser = null;
+        let authToken = null;
+        
+        // API Base URL
+        const API_BASE = window.location.origin + '/api';
+        
+        // Language translations
+        const translations = {
+            hindi: {
+                mainTitle: 'स्वचालित उपस्थिति प्रणाली',
+                subtitle: 'ग्रामीण स्कूलों के लिए',
+                systemTitle: 'स्वचालित उपस्थिति प्रणाली',
+                schoolSubtitle: 'ग्रामीण स्कूलों के लिए',
+                langPrompt: 'अपनी भाषा चुनें / Choose Your Language',
+                loginTypePrompt: 'लॉगिन प्रकार चुनें',
+                studentText: 'छात्र',
+                teacherText: 'शिक्षक',
+                adminText: 'प्रशासक',
+                backText: '← वापस',
+                studentLoginTitle: 'छात्र लॉगिन',
+                teacherLoginTitle: 'शिक्षक लॉगिन',
+                adminLoginTitle: 'प्रशासक लॉगिन',
+                studentIdLabel: 'छात्र आईडी:',
+                teacherIdLabel: 'शिक्षक आईडी:',
+                adminIdLabel: 'प्रशासक आईडी:',
+                studentPasswordLabel: 'पासवर्ड:',
+                teacherPasswordLabel: 'पासवर्ड:',
+                adminPasswordLabel: 'पासवर्ड:',
+                studentLoginBtn: 'लॉगिन',
+                teacherLoginBtn: 'लॉगिन',
+                adminLoginBtn: 'लॉगिन',
+                studentBackBtn: '← वापस',
+                teacherBackBtn: '← वापस',
+                adminBackBtn: '← वापस'
+            },
+            english: {
+                mainTitle: 'Automated Attendance System',
+                subtitle: 'For Rural Schools',
+                systemTitle: 'Automated Attendance System',
+                schoolSubtitle: 'For Rural Schools',
+                langPrompt: 'Choose Your Language / अपनी भाषा चुनें',
+                loginTypePrompt: 'Select Login Type',
+                studentText: 'Student',
+                teacherText: 'Teacher',
+                adminText: 'Admin',
+                backText: '← Back',
+                studentLoginTitle: 'Student Login',
+                teacherLoginTitle: 'Teacher Login',
+                adminLoginTitle: 'Admin Login',
+                studentIdLabel: 'Student ID:',
+                teacherIdLabel: 'Teacher ID:',
+                adminIdLabel: 'Admin ID:',
+                studentPasswordLabel: 'Password:',
+                teacherPasswordLabel: 'Password:',
+                adminPasswordLabel: 'Password:',
+                studentLoginBtn: 'Login',
+                teacherLoginBtn: 'Login',
+                adminLoginBtn: 'Login',
+                studentBackBtn: '← Back',
+                teacherBackBtn: '← Back',
+                adminBackBtn: '← Back'
+            }
+        };
+        
+        // Utility functions
+        function showAlert(alertId, message, type) {
+            const alertElement = document.getElementById(alertId);
+            alertElement.className = 'alert ' + type + ' show';
+            alertElement.textContent = message;
+            
+            setTimeout(() => {
+                alertElement.classList.remove('show');
+            }, 5000);
+        }
+        
+        function toggleLoading(buttonId, isLoading) {
+            const button = document.getElementById(buttonId);
+            const btnText = button.querySelector('.btn-text');
+            const loading = button.querySelector('.loading');
+            
+            if (isLoading) {
+                button.disabled = true;
+                btnText.style.display = 'none';
+                loading.style.display = 'inline-block';
+            } else {
+                button.disabled = false;
+                btnText.style.display = 'inline';
+                loading.style.display = 'none';
+            }
+        }
+        
+        // API functions
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+            
+            if (authToken) {
+                options.headers.Authorization = 'Bearer ' + authToken;
+            }
+            
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            
+            try {
+                const response = await fetch(API_BASE + endpoint, options);
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Something went wrong');
+                }
+                
+                return result;
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        function selectLanguage(language) {
+            currentLanguage = language;
+            updateLanguage();
+            showScreen('loginTypeScreen');
+        }
+        
+        function updateLanguage() {
+            const lang = translations[currentLanguage];
+            
+            // Update all text elements
+            Object.keys(lang).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.querySelector('.btn-text')) {
+                        element.querySelector('.btn-text').textContent = lang[key];
+                    } else {
+                        element.textContent = lang[key];
+                    }
+                }
+            });
+            
+            // Update placeholders
+            const placeholders = {
+                english: {
+                    studentId: 'Enter your student ID',
+                    teacherId: 'Enter your teacher ID',
+                    adminId: 'Enter your admin ID',
+                    studentPassword: 'Enter your password',
+                    teacherPassword: 'Enter your password',
+                    adminPassword: 'Enter your password'
+                },
+                hindi: {
+                    studentId: 'अपनी छात्र आईडी दर्ज करें',
+                    teacherId: 'अपनी शिक्षक आईडी दर्ज करें',
+                    adminId: 'अपनी प्रशासक आईडी दर्ज करें',
+                    studentPassword: 'अपना पासवर्ड दर्ज करें',
+                    teacherPassword: 'अपना पासवर्ड दर्ज करें',
+                    adminPassword: 'अपना पासवर्ड दर्ज करें'
+                }
+            };
+            
+            Object.keys(placeholders[currentLanguage]).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.placeholder = placeholders[currentLanguage][key];
+                }
+            });
+        }
+        
+        function showScreen(screenId) {
+            // Hide all screens
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Show target screen
+            document.getElementById(screenId).classList.add('active');
+            
+            // Adjust container size for dashboard
+            const container = document.querySelector('.container');
+            if (screenId === 'dashboardScreen') {
+                container.style.maxWidth = '1200px';
+                container.style.minWidth = '800px';
+            } else {
+                container.style.maxWidth = '500px';
+                container.style.minWidth = '400px';
+            }
+        }
+        
+        function showLoginForm(userType) {
+            showScreen(userType + 'LoginScreen');
+        }
+        
+        function goBack(screenId) {
+            showScreen(screenId);
+        }
+        
+        // Login function
+        async function handleLogin(role, userId, password, alertId, buttonId) {
+            toggleLoading(buttonId, true);
+            
+            try {
+                const result = await apiCall('/login', 'POST', {
+                    userId,
+                    password,
+                    role
+                });
+                
+                // Store authentication data
+                authToken = result.token;
+                currentUser = result.user;
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                showAlert(alertId, 'Login successful!', 'success');
+                
+                // Redirect based on role
+                setTimeout(() => {
+                    if (currentUser.role === 'teacher') {
+                        window.location.href = '/teacher';
+                    } else {
+                        showDashboard();
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert(alertId, error.message, 'error');
+            } finally {
+                toggleLoading(buttonId, false);
+            }
+        }
+        
+        // Dashboard function
+        async function showDashboard() {
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userRole').textContent = currentUser.role;
+            document.getElementById('userIdDisplay').textContent = currentUser.userId;
+            
+            try {
+                const dashboardData = await apiCall('/dashboard');
+                renderDashboard(dashboardData);
+                showScreen('dashboardScreen');
+            } catch (error) {
+                showAlert('studentAlert', 'Failed to load dashboard: ' + error.message, 'error');
+            }
+        }
+        
+        function renderDashboard(data) {
+            const content = document.getElementById('dashboardContent');
+            
+            if (data.role === 'student') {
+                content.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.totalDays}</div>
+                            <div>Total Days</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.presentDays}</div>
+                            <div>Present Days</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.absentDays}</div>
+                            <div>Absent Days</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.attendancePercentage}%</div>
+                            <div>Attendance</div>
+                        </div>
+                    </div>
+                    <h3>Recent Attendance</h3>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        ${data.attendance.map(record => `
+                            <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                                <span>${new Date(record.date).toLocaleDateString()}</span>
+                                <span style="color: ${record.status === 'present' ? 'green' : record.status === 'absent' ? 'red' : 'orange'}">${record.status.toUpperCase()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (data.role === 'admin') {
+                content.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.totalStudents}</div>
+                            <div>Total Students</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.totalTeachers}</div>
+                            <div>Total Teachers</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.totalClasses}</div>
+                            <div>Total Classes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.stats.todayAttendance}</div>
+                            <div>Today's Attendance</div>
+                        </div>
+                    </div>
+                    <h3>System Overview</h3>
+                    <p>Welcome to the admin dashboard. Use this panel to manage users, classes, and view reports.</p>
+                `;
+            }
+        }
+        
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            showScreen('languageScreen');
+        }
+        
+        // Check for existing login on page load
+        window.addEventListener('load', () => {
+            const savedToken = localStorage.getItem('authToken');
+            const savedUser = localStorage.getItem('currentUser');
+            
+            if (savedToken && savedUser) {
+                authToken = savedToken;
+                currentUser = JSON.parse(savedUser);
+                if (currentUser.role === 'teacher') {
+                    window.location.href = '/teacher';
+                } else {
+                    showDashboard();
+                }
+            }
+        });
+        
+        // Form submission handlers
+        document.getElementById('studentLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userId = document.getElementById('studentId').value;
+            const password = document.getElementById('studentPassword').value;
+            handleLogin('student', userId, password, 'studentAlert', 'studentLoginBtn');
+        });
+        
+        document.getElementById('teacherLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userId = document.getElementById('teacherId').value;
+            const password = document.getElementById('teacherPassword').value;
+            handleLogin('teacher', userId, password, 'teacherAlert', 'teacherLoginBtn');
+        });
+        
+        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userId = document.getElementById('adminId').value;
+            const password = document.getElementById('adminPassword').value;
+            handleLogin('admin', userId, password, 'adminAlert', 'adminLoginBtn');
+        });
+        
+        // Add selection highlight for language buttons
+        document.querySelectorAll('.language-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.language-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>
